@@ -1,0 +1,162 @@
+<!-- app/templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flascii - ASCII Art Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.24.0/axios.min.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #374151;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #4B5563;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #6B7280;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-8">flascii</h1>
+        <div class="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Text</label>
+                    <textarea
+                        id="input-text"
+                        class="p-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        rows="3"
+                    ></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Font</label>
+                        <select
+                            id="font-select"
+                            class="p-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        >
+                            {% for font in fonts %}
+                            <option value="{{ font }}">{{ font }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Width</label>
+                        <input
+                            type="number"
+                            id="width-input"
+                            value="80"
+                            min="20"
+                            max="200"
+                            class="p-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        >
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Justify</label>
+                        <select
+                            id="justify-select"
+                            class="p-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        >
+                            <option value="left">Left</option>
+                            <option value="center">Center</option>
+                            <option value="right">Right</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Text Color</label>
+                        <select
+                            id="text-color-select"
+                            class="p-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        >
+                            <option value="#ffffff">White</option>
+                            <option value="#fde047">Yellow</option>
+                            <option value="#4ade80">Green</option>
+                            <option value="#60a5fa">Blue</option>
+                            <option value="#f87171">Red</option>
+                            <option value="#e879f9">Magenta</option>
+                            <option value="#67e8f9">Cyan</option>
+                            <option value="#9ca3af">Gray</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Background Color</label>
+                        <select
+                            id="bg-color-select"
+                            class="p-2 mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        >
+                            <option value="#1f2937">None (Dark)</option>
+                            <option value="#000000">Black</option>
+                            <option value="#1e3a8a">Dark Blue</option>
+                            <option value="#166534">Dark Green</option>
+                            <option value="#991b1b">Dark Red</option>
+                            <option value="#86198f">Dark Magenta</option>
+                            <option value="#155e75">Dark Cyan</option>
+                            <option value="#374151">Dark Gray</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button
+                    id="generate-btn"
+                    class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                    Generate ASCII Art
+                </button>
+            </div>
+            
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700">Result</label>
+                <pre
+                    id="result"
+                    class="mt-1 p-4 rounded-md overflow-x-auto font-mono text-sm custom-scrollbar"
+                    style="color: white; background-color: #1f2937;"
+                ></pre>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('generate-btn').addEventListener('click', async () => {
+            const text = document.getElementById('input-text').value;
+            const font = document.getElementById('font-select').value;
+            const width = parseInt(document.getElementById('width-input').value);
+            const justify = document.getElementById('justify-select').value;
+            const textColor = document.getElementById('text-color-select').value;
+            const bgColor = document.getElementById('bg-color-select').value;
+            
+            try {
+                const response = await axios.post('/api/generate', {
+                    text,
+                    font,
+                    width,
+                    justify
+                });
+                
+                const resultElement = document.getElementById('result');
+                resultElement.textContent = response.data.ascii_art;
+                resultElement.style.color = textColor;
+                resultElement.style.backgroundColor = bgColor;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').textContent = 'Error generating ASCII art';
+            }
+        });
+    </script>
+</body>
+</html>
